@@ -1068,8 +1068,9 @@ try {
     await current.evaluate(() => { __setHidden(true); document.getElementById('stage').blur(); __setHidden(false); window.dispatchEvent(new Event('focus')); });
     const focus = (await state()).focusAction; await current.keyboard.press('ArrowDown');
     check('Warm return restores remote focus', (await state()).focusAction !== focus && (await call('where')).focusCount === 1);
-    const clock = await current.locator('#caption .clock').textContent();
-    check('Live 12-hour clock has no AM/PM', /^\s*\d{1,2}:\d{2}\s*$/.test(clock), clock);
+    const hhmm = () => current.evaluate(() => { const d = new Date(), p = n => (n < 10 ? '0' : '') + n; return p(d.getHours()) + ':' + p(d.getMinutes()); });
+    const before = await hhmm(), clock = (await current.locator('#caption .clock').textContent()).trim(), after = await hhmm();
+    check('Live 24-hour clock shows local HH:MM', /^([01]\d|2[0-3]):[0-5]\d$/.test(clock) && (clock === before || clock === after), clock + ' / ' + before);
   });
   await run('Open rotation and browser fallback', async () => {
     await page({ seed: baseline({ mode: 'open' }) }); check('Open mode advances at cold start', (await state()).wallpaper === walls[1].id);
